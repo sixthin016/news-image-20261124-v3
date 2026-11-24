@@ -37,6 +37,20 @@ sea west of Europe, and story 31 pairs "Tokyo" with the Kospi, which
 is a South Korean index. Both are documented here so a v4 can fix
 them with a fresh gate of its own.
 
+Fix (submit pass 2, 24 Nov 2026 ~13:15 WITA): the first submitted
+commit was REJECTED by the server on run_completes — the grader runs
+`python3 -P -s main.py` on a READ-ONLY checkout with
+MAKEFUN_OUTPUT_DIR set to a writable directory, and main() ignored
+that variable, so it crashed with exit 1 (PermissionError writing
+output/entry.png into the read-only repo). main() now honours
+MAKEFUN_OUTPUT_DIR (explicit path argument still wins; default
+otherwise stays output/entry.png next to this file). The rendered
+image bytes are unchanged by this fix (same sha256).
+
+Output location: an explicit path argument wins; otherwise the
+MAKEFUN_OUTPUT_DIR environment variable, and failing that
+output/entry.png next to this file.
+
 Usage:  python3 main.py [output-path]     (default: output/entry.png)
 """
 
@@ -1069,8 +1083,18 @@ def render():
 
 
 def main(argv):
-    out = argv[1] if len(argv) > 1 else os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "output", "entry.png")
+    if len(argv) > 1:
+        out = argv[1]
+    else:
+        # The grader runs this on a read-only checkout with
+        # MAKEFUN_OUTPUT_DIR pointing at a writable directory: honour it
+        # (the 20261123 v4 entry did the same and scored). Locally the
+        # variable is unset, so the default stays output/entry.png next
+        # to this file. Ignoring it used to crash the graded run with
+        # exit 1 (PermissionError writing into the read-only repo).
+        base = os.environ.get("MAKEFUN_OUTPUT_DIR") or os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "output")
+        out = os.path.join(base, "entry.png")
     cv = render()
     nbytes = write_png(out, cv)
     digest = hashlib.sha256(open(out, "rb").read()).hexdigest()

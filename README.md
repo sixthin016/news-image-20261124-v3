@@ -105,7 +105,11 @@ python3 main.py /tmp/entry.png  # or any path you choose
 
 One run takes about 2 seconds. No network, no randomness, no
 wall-clock time, no third-party packages: only the Python standard
-library, so two runs write byte-identical output.
+library, so two runs write byte-identical output. When
+`MAKEFUN_OUTPUT_DIR` is set (the make.fun grader sets it to a
+writable directory while the checkout is read-only), the PNG is
+written there as `entry.png` instead — an explicit path argument
+still wins.
 
 ## How it is drawn
 
